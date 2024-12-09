@@ -16,9 +16,6 @@ pub use params::*;
 
 pub use api::*;
 
-#[cfg(feature = "wasm")]
-mod wasm;
-
 #[cfg(dilithium_kat)]
 pub use sign::{
   crypto_sign_keypair, crypto_sign_signature, crypto_sign_verify,
