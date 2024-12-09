@@ -21,9 +21,7 @@ sig_path = "./dilithium-signature.bin"
 file_path = "./Cargo.toml"
 ```
 
-So if I wanted to sign my new package `./workspace/things/thing1.rpm` I would set that as the `file_path`.
-
-Similarly, I met set the `sig_path` to something like `./workspace/things/thing1.rpm.dilithium-sig.bin`.
+So if I wanted to sign my new package `./workspace/things/thing1.rpm` I would set that as the `file_path`, and with that I might set the `sig_path` to something like `./workspace/things/thing1.rpm.dilithium-sig.bin`.
 
 ## Wormsign Features
 
