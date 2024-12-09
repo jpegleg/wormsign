@@ -1,6 +1,6 @@
 # wormsign
 
-This is a tool design for Linux CLI use to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures.
+This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures.
 
 ⚠️ Use at your own risk!
 
