@@ -1,0 +1,4 @@
+key_path = "./dilithium-private.key"
+pub_path = "./dilithium-public.key"
+sig_path = "./dilithium-signature.bin"
+file_path = "./Cargo.toml"
