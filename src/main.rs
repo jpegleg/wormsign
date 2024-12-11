@@ -235,7 +235,6 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let pubpath = Path::new(&pub_path);
 
     let kmetadata = keypath.metadata().expect("Failed to read file metadata for key");
-    let mut kfile = File::open(&keypath).expect("Failed to open the key");
     let mut kpubf = File::open(&pubpath).expect("Failed to open the public key");
     let mut pubbytes = Vec::new();
     kpubf.read_to_end(&mut pubbytes).expect("Failed to read the public key");
