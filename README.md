@@ -9,7 +9,10 @@ This tool includes a modified version of this [dilithium library](https://github
 ## Key encryption
 
 The signing key is encrypted after generation and encrypted when not in use as of version 0.1.1. The encryption is AES-256 with a password.
-The key is automatically decrypted when signing and encrypted again after signing is completed. A future version might decrypt in memory instead of on disk.
+The wormsign program prompts for a password on key generation and signing (but not verifying, since that is public key only).
+The key is automatically encrypted again after signing is completed. A future version of wormsign might decrypt in memory instead of on disk.
+
+<b>If an invalid password to decrypt the signing key is supplied while attempting to sign, wormsign will create a signature with the key ciphertext as the signing key, but that signature will not match the public key and verifications fail.</b>
 
 ## TOML config file
 
