@@ -6,9 +6,10 @@ This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/
 
 This tool includes a modified version of this [dilithium library](https://github.com/Argyle-Software/dilithium) to enable reading keys from files.
 
-## Version 1.0 is rough
+## Key encryption
 
-There are a number of improvements to make to this tool. More error handling and security features are in progress.
+The signing key is encrypted after generation and encrypted when not in use as of version 0.1.1. The encryption is AES-256 with a password.
+The key is automatically decrypted when signging and encrypted again after use. A future version might decrypt in memory instead of on disk.
 
 ## TOML config file
 
