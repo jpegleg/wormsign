@@ -150,7 +150,7 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let password = read_password()?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
 
-    aesrest::decrypt_file(key_path, key_path, &keymaterial);
+    let _ = aesrest::decrypt_file(key_path, key_path, &keymaterial);
     
     let file_path = Path::new(file_path);
     let metadata = file_path.metadata().expect("Failed to read file metadata");
@@ -293,7 +293,7 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     println!(" }}");
     println!("}}");
 
-    aesrest::encrypt_file(key_path, key_path, &keymaterial);
+    let _ = aesrest::encrypt_file(key_path, key_path, &keymaterial);
     
     Ok(())
 
