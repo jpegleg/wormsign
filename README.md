@@ -8,6 +8,8 @@ This tool includes a modified version of this [dilithium library](https://github
 
 ## Usage
 
+The `wormsign` options `-g`, `-s`, and `-v` can be used on their own, or in any combination.
+
 Creating a new keypair, signing, and verifying all at once:
 
 ```
@@ -22,13 +24,19 @@ $ vim wormsign.toml # populate the values as desired using an existing wormsign 
 $ wormsign -s # sign with the existing key
 ```
 
-Verifying a file and signature:
+Verifying a file and signature with a public key:
 
 ```
 $ vim wormsign.toml # populate the values to verify, note that key_path isn't used during verification so key_path = "" is valid but key_path must be in the wormsign.toml
 $ wormsign -v # verify only
 ```
 
+Generating a new signing key:
+
+```
+$ vim wormsign.toml # populate as desired
+$ wormsign -g # generate a keypair only
+```
 
 ## Key encryption
 
