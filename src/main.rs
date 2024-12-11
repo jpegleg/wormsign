@@ -148,8 +148,8 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let password = read_password()?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
 
-    let _ = aesrest::decrypt_file(key_path, key_path, &keymaterial);
-    
+    let kbytes = aesrest::decrypt_ram(key_path, &keymaterial).unwrap();
+
     let file_path = Path::new(file_path);
     let metadata = file_path.metadata().expect("Failed to read file metadata");
     let mut file = File::open(&file_path).expect("Failed to open the file");
@@ -237,10 +237,6 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let kmetadata = keypath.metadata().expect("Failed to read file metadata for key");
     let mut kfile = File::open(&keypath).expect("Failed to open the key");
     let mut kpubf = File::open(&pubpath).expect("Failed to open the public key");
-
-    let mut kbytes = Vec::new();
-    kfile.read_to_end(&mut kbytes).expect("Failed to read the key");
-
     let mut pubbytes = Vec::new();
     kpubf.read_to_end(&mut pubbytes).expect("Failed to read the public key");
 
@@ -290,8 +286,6 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
 
     println!(" }}");
     println!("}}");
-
-    let _ = aesrest::encrypt_file(key_path, key_path, &keymaterial);
     
     Ok(())
 
