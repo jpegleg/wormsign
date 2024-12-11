@@ -37,7 +37,7 @@ fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn std::error::Erro
     std::io::stdout().flush()?;
     let password = read_password()?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-    aesrest::encrypt_file(key_path, key_path, &keymaterial);
+    let _ = aesrest::encrypt_file(key_path, key_path, &keymaterial);
 
     Ok(())
 }
