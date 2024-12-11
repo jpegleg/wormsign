@@ -28,11 +28,9 @@ struct Config {
 
 fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let keys = Keypair::generate();
-
     let mut output = File::create(key_path)?;
-    output.write_all(&keys.expose_secret())?;
     set_permissions(&key_path, PermissionsExt::from_mode(0o600)).unwrap(); 
-
+    output.write_all(&keys.expose_secret())?;
     let mut puboutput = File::create(pub_path)?;
     puboutput.write_all(&keys.public)?;
     print!("Enter password: ");
