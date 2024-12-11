@@ -26,6 +26,14 @@ So if I wanted to sign my new package `./workspace/things/thing1.rpm` I would se
 
 ## Wormsign Features
 
-- Dilithium3 key generation (-g)
-- Dilithium3 file signing (-s)
-- Dilithium3 signature verification (-v)
+As of version 0.1.1 the most secure defaults are set: Dilithium5, AES, and random signatures.
+
+Those features can be adjusted at compile time in the `Cargo.toml`.
+
+Defaults:
+
+- Dilithium5 key generation (-g)
+- Dilithium5 file signing (-s)
+- Dilithium5 signature verification (-v)
+
+
