@@ -6,11 +6,33 @@ This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/
 
 This tool includes a modified version of this [dilithium library](https://github.com/Argyle-Software/dilithium) to enable reading keys from files.
 
+## Usage
+
+Creating a new keypair, signing, and verifying all at once:
+
+```
+$ vim wormsign.toml # populate the values as desired
+$ wormsign -g -s -v # generate a new key, sign, and verify all at once
+```
+
+Signing a file:
+
+```
+$ vim wormsign.toml # populate the values as desired using an existing wormsign key
+$ wormsign -s # sign with the existing key
+```
+
+Verifying a file and signature:
+
+```
+$ vim wormsign.toml # populate the values to verify, note that key_path isn't used during verification so key_path = "" is valid but key_path must be in the wormsign.toml
+$ wormsign -v # verify only
+```
+
+
 ## Key encryption
 
-The signing key is encrypted after generation and encrypted when not in use as of version 0.1.1. The encryption is AES-256 with a password.
-The wormsign program prompts for a password on key generation and signing (but not verifying, since that is public key only).
-The key is automatically encrypted again after signing is completed. A future version of wormsign might decrypt in memory instead of on disk.
+The signing key is encrypted after generation and left as ciphertext on the disk. When signing, wormsign reads the ciphertext and decrypts the signing key in RAM only.
 
 <b>If an invalid password to decrypt the signing key is supplied while attempting to sign, wormsign will create a signature with the key ciphertext as the signing key, but that signature will not match the public key and verifications fail.</b>
 
@@ -29,13 +51,13 @@ So if I wanted to sign my new package `./workspace/things/thing1.rpm` I would se
 
 ## Wormsign Features
 
-As of version 0.1.1 the most secure defaults are set: Dilithium5, AES, and random signatures.
+The most secure available defaults are set: Dilithium5, AES, and random signatures.
 
 Those features can be adjusted at compile time in the `Cargo.toml`.
 
 Defaults:
 
-- Dilithium5 key generation (-g)
+- Dilithium5 protected (AES-256 encrypted) signing key generation (-g)
 - Dilithium5 file signing (-s)
 - Dilithium5 signature verification (-v)
 
