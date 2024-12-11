@@ -14,3 +14,11 @@ argon2 = "0.5.1"
 toml = "0.8.19"
 serde = { version = "1", features = ["derive"] }
 rand = "0.8.5"
+
+[features]
+default = ["mode5", "aes", "random_signing"]
+mode2 = []
+mode3 = []
+mode5 = []
+aes = []
+random_signing = []
