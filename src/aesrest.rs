@@ -45,18 +45,14 @@ pub fn encrypt_file(input_file: &str, output_file: &str, keymaterial: &[u8]) -> 
     Ok(())
 }
 
-pub fn decrypt_file(input_file: &str, output_file: &str, keymaterial: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+pub fn decrypt_ram(input_file: &str, keymaterial: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let mut file = File::open(input_file)?;
     let mut nonce = [0u8; 16];
     file.read_exact(&mut nonce)?;
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
-
     let mut cipher = Aes256Ctr::new(keymaterial.into(), &nonce.into());
     cipher.apply_keystream(&mut data);
 
-    let mut output = File::create(output_file)?;
-    output.write_all(&data)?;
-
-    Ok(())
+    Ok(data)
 }
