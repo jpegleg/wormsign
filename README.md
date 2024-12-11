@@ -65,6 +65,8 @@ Those features can be adjusted at compile time in the `Cargo.toml`.
 
 Defaults:
 
+- "randomized signatures" enabled
+- Dilithium-AES for AES-256 sampling and expanding instead of SHAKE
 - Dilithium5 protected (AES-256 encrypted) signing key generation (-g)
 - Dilithium5 file signing (-s)
 - Dilithium5 signature verification (-v)
