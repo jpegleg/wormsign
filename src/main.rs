@@ -1,5 +1,6 @@
 use std::env;
 use std::os::unix::fs::PermissionsExt;
+use std::fs::set_permissions;
 use std::path::Path;
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
