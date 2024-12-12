@@ -15,8 +15,3 @@ mod symmetric;
 pub use params::*;
 
 pub use api::*;
-
-#[cfg(dilithium_kat)]
-pub use sign::{
-  crypto_sign_keypair, crypto_sign_signature, crypto_sign_verify,
-};
