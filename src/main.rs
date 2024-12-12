@@ -9,9 +9,10 @@ use std::io::{Read, Write};
 
 use serde::Deserialize;
 use sha3::{Shake256, digest::{Update, ExtendableOutput}};
-use chrono::{NaiveDateTime, DateTime, Utc};
+use chrono::{TimeZone, NaiveDateTime, DateTime, Utc};
 use users::{get_user_by_uid, get_group_by_gid};
 use rpassword::read_password;
+use zeroize::Zeroize;
 
 use wormsign::Keypair;
 use wormsign::verify;
@@ -29,19 +30,21 @@ struct Config {
 fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let keys = Keypair::generate();
     let mut output = File::create(key_path)?;
-    set_permissions(&key_path, PermissionsExt::from_mode(0o600)).unwrap(); 
+    set_permissions(&key_path, PermissionsExt::from_mode(0o600)).unwrap();
     output.write_all(&keys.expose_secret())?;
     let mut puboutput = File::create(pub_path)?;
     puboutput.write_all(&keys.public)?;
     print!("Enter password: ");
     std::io::stdout().flush()?;
-    let password = read_password()?;
-    let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
+    let mut password = read_password()?;
+    let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let _ = aesrest::encrypt_file(key_path, key_path, &keymaterial);
-
+    keymaterial.zeroize();
+    password.zeroize();
     Ok(())
 }
 
+#[allow(deprecated)]
 fn verf(file_path: &str, pub_path: &str, sig_path: &str)  {
     let file_path = Path::new(file_path);
     let metadata = file_path.metadata().expect("Failed to read file metadata");
@@ -91,7 +94,7 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str)  {
         let ctime = metadata.ctime();
         let ctimesec = metadata.ctime_nsec() as u32;
         let naive_datetime = NaiveDateTime::from_timestamp_opt(ctime, ctimesec).expect("Invalid changed timestamp");
-        DateTime::<Utc>::from_utc(naive_datetime, Utc)
+        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
     };
 
     println!("  \"Created timestamp (UTC)\": \"{}\",", created);
@@ -142,6 +145,7 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str)  {
 
 }
 
+#[allow(deprecated)]
 fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     print!("Enter password: ");
     std::io::stdout().flush()?;
@@ -198,7 +202,7 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
         let ctime = metadata.ctime();
         let ctimesec = metadata.ctime_nsec() as u32;
         let naive_datetime = NaiveDateTime::from_timestamp_opt(ctime, ctimesec).expect("Invalid changed timestamp");
-        DateTime::<Utc>::from_utc(naive_datetime, Utc)
+        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
     };
 
     println!("  \"Created timestamp (UTC)\": \"{}\",", created);
@@ -255,8 +259,8 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let kchanged: DateTime<Utc> = {
         let ctime = kmetadata.ctime();
         let ctimesec = kmetadata.ctime_nsec() as u32;
-        let naive_datetime = NaiveDateTime::from_timestamp_opt(ctime, ctimesec).expect("Invalid changed timestamp");
-        DateTime::<Utc>::from_utc(naive_datetime, Utc)
+        let naive_datetime = chrono::NaiveDateTime::from_timestamp_opt(ctime, ctimesec).expect("Invalid changed timestamp");
+        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
     };
 
     println!("  \"Key Created timestamp (UTC)\": \"{}\",", kcreated);
@@ -285,11 +289,10 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
 
     println!(" }}");
     println!("}}");
-    
+
     Ok(())
 
 }
-
 
 fn donkout() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
