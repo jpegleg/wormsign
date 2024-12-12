@@ -7,13 +7,20 @@ use ctr::cipher::{KeyIvInit, StreamCipher};
 use ctr::Ctr64BE;
 use rand::{RngCore, rngs::OsRng};
 use sha3::{Shake256, digest::{Update, ExtendableOutput, XofReader}};
+use argon2::Argon2;
+
 type Aes256Ctr = Ctr64BE<Aes256>;
+
+pub fn a2(password: &[u8], salt: &[u8]) -> [u8; 32] {
+    let mut okm = [0u8; 32];
+    let _ = Argon2::default().hash_password_into(password, salt, &mut okm);
+    okm
+}
 
 pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
     let mut hasher = Shake256::default();
-    let salteze = b"07f9c8d6ab8d13f8bf68bcd8464186de";
-    hasher.update(salteze);
-    hasher.update(password);
+    let salt = b"07f9c8d6ab8d13f8bf68bcd8464186de";
+    hasher.update(&a2(password, salt));
     let mut reader = hasher.finalize_xof();
     let mut key = vec![0u8; length];
     XofReader::read(&mut reader, &mut key);
