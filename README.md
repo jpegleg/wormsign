@@ -1,8 +1,9 @@
+
+![cdlogo](https://carefuldata.com/images/cdlogo.png)
+
 # wormsign
 
 This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures.
-
-⚠️ Use at your own risk!
 
 This tool includes a modified version of [dilithium library](https://github.com/Argyle-Software/dilithium). The modification is only to enable writing and reading keys from files, something that library doesn't yet have support for. The dilithium cryptography itself comes entirely from that library. Once support for the same functionality is included in that library (see https://github.com/Argyle-Software/dilithium/issues/11), I'll likely switch wormsign to pulling the library from crates.io normally.
 
