@@ -1,392 +1,62 @@
-use std::env;
-use std::error::Error as StdError;
-use std::os::unix::fs::{PermissionsExt, MetadataExt};
-use std::fs::{set_permissions, File, OpenOptions};
-use std::path::Path;
-use std::io::{self, Read, Write};
-use serde::Deserialize;
-use sha3::{Shake256, digest::{Update, ExtendableOutput}};
-use chrono::{TimeZone, NaiveDateTime, DateTime, Utc};
-use users::{get_user_by_uid, get_group_by_gid};
-use rpassword::read_password;
-use zeroize::Zeroize;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use wormsign::Keypair;
-use wormsign::verify;
+use aes::Aes256;
+use ctr::cipher::{KeyIvInit, StreamCipher};
+use ctr::Ctr64BE;
+use rand::{RngCore, rngs::OsRng};
+use sha3::{Shake256, digest::{Update, ExtendableOutput, XofReader}};
+use argon2::Argon2;
 
-mod aesrest;
+type Aes256Ctr = Ctr64BE<Aes256>;
 
-#[derive(Deserialize)]
-struct Config {
-    key_path: String,
-    pub_path: String,
-    sig_path: String,
-    file_path: String,
+pub fn a2(password: &[u8], salt: &[u8]) -> [u8; 32] {
+    let mut okm = [0u8; 32];
+    let _ = Argon2::default().hash_password_into(password, salt, &mut okm);
+    okm
 }
 
-fn print_error_json(msg: &str) {
-    eprintln!(r#"{{"Error":"{}"}}"#, msg);
-}
-
-macro_rules! try_print_json {
-    ($expr:expr, $json_started:expr) => {
-        match $expr {
-            Ok(val) => val,
-            Err(e) => {
-                if $json_started {
-                    println!("  \"Error\": \"{}\"", e);
-                    println!(" }}");
-                    println!("}}");
-                    return Ok(());
-                } else {
-                    return Err(Box::new(e) as Box<dyn StdError>);
-                }
-            }
-        }
-    };
-}
-
-fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn StdError>> {
-    let keys = Keypair::generate();
-    let _ = File::create(key_path)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create key file {}: {}", key_path, e)))?;
-    set_permissions(&key_path, PermissionsExt::from_mode(0o600))
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to set permissions on {}: {}", key_path, e)))?;
-    let mut puboutput = File::create(pub_path)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e)))?;
-    puboutput.write_all(&keys.public)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)))?;
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
-    let mut password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
-    let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-    aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to encrypt key file: {}", e)))?;
-    keymaterial.zeroize();
-    password.zeroize();
-    Ok(())
-}
-
-#[allow(deprecated)]
-fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
-    let mut json_started = false;
-    let file_path = Path::new(file_path);
-    let metadata = try_print_json!(
-        file_path.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata: {}", e))),
-        json_started
-    );
-    let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
-        json_started
-    );
-    let mut bytes = Vec::new();
-    try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
-        json_started
-    );
-    let num_bytes = bytes.len();
-    let num_bits = num_bytes * 8;
-    let byte_distribution = bytes.iter().collect::<std::collections::HashSet<_>>().len() as f64 / num_bytes as f64;
-    let file_is_open = match OpenOptions::new().read(true).write(true).open(file_path) {
-        Ok(_) => false,
-        Err(_) => true,
-    };
-    let chronox: String = Utc::now().to_string();
+pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
     let mut hasher = Shake256::default();
-    hasher.update(&bytes);
-    let mut resulto = hasher.finalize_xof();
-    let mut shake256 = [0u8; 10];
-    let _ = resulto.read(&mut shake256);
-    json_started = true;
-    println!("{{");
-    println!("{:?}: {{", file_path);
-    println!("  \"Checksum SHA3 SHAKE256 10\": \"{:?}\",", shake256);
-    println!("  \"Report time\": \"{}\",", chronox);
-    let num_io_blocks = metadata.blocks();
-    println!("  \"Number of IO blocks\": \"{}\",", num_io_blocks);
-    let blocksize = metadata.blksize();
-    println!("  \"Block size\": \"{}\",", blocksize);
-    let inode = metadata.ino();
-    println!("  \"Inode\": \"{}\",", &inode);
-    println!("  \"Total as bytes\": \"{}\",", &num_bytes);
-    println!("  \"Total as kilobytes\": \"{}\",", &num_bytes / 1024);
-    println!("  \"Total as megabytes\": \"{}\",", &num_bytes / (1024 * 1024));
-    println!("  \"Total as bits\": \"{}\",", num_bits);
-    println!("  \"Byte distribution\": \"{}\",", byte_distribution);
-    let created: DateTime<Utc> = try_print_json!(
-        metadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get created timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let modified: DateTime<Utc> = try_print_json!(
-        metadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get modified timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let access: DateTime<Utc> = try_print_json!(
-        metadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get accessed timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let changed: DateTime<Utc> = {
-        let ctime = metadata.ctime();
-        let ctimesec = metadata.ctime_nsec() as u32;
-        let naive_datetime = try_print_json!(
-            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid changed timestamp")),
-            json_started
-        );
-        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
-    };
-    println!("  \"Created timestamp (UTC)\": \"{}\",", created);
-    println!("  \"Modified timestamp (UTC)\": \"{}\",", modified);
-    println!("  \"Accessed timestamp (UTC)\": \"{}\",", access);
-    println!("  \"Changed timestamp (UTC)\": \"{}\",", changed);
-    let permission = metadata.permissions();
-    let mode = permission.mode();
-    println!("  \"Permissions\": \"{:o}\",", mode);
-    let uid = metadata.uid();
-    let gid = metadata.gid();
-    let owner = match get_user_by_uid(uid) {
-        Some(user) => user.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    let group = match get_group_by_gid(gid) {
-        Some(group) => group.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    println!("  \"Owner\": \"{} (uid: {})\",", owner, uid);
-    println!("  \"Group\": \"{} (gid: {})\",", group, gid);
-    if file_is_open {
-        println!("  \"Open\": \"File is currently open by another program... verifying anyway!\",");
-    } else {
-        println!("  \"Open\": \"File is not open by another program. Verifying...\",");
-    }
-    let mut kfile = try_print_json!(
-        File::open(&pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the key: {}", e))),
-        json_started
-    );
-    let mut kbytes = Vec::new();
-    try_print_json!(
-        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the key: {}", e))),
-        json_started
-    );
-    let mut sfile = try_print_json!(
-        File::open(&sig_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the signature file: {}", e))),
-        json_started
-    );
-    let mut sbytes = Vec::new();
-    try_print_json!(
-        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the signature file: {}", e))),
-        json_started
-    );
-    let msg = &bytes;
-    let sig_verify = verify(&sbytes, &msg, &kbytes);
-    let statusig = sig_verify.is_ok();
-    println!("  \"Verification Result\": \"{}\"", statusig);
-    println!(" }}");
-    println!("}}");
+    let salt = b"07f9c8d6ab8d13f8bf68bcd8464186de";
+    hasher.update(&a2(password, salt));
+    let mut reader = hasher.finalize_xof();
+    let mut key = vec![0u8; length];
+    XofReader::read(&mut reader, &mut key);
+    key
+}
+
+fn generate_nonce() -> [u8; 16] {
+    let mut nonce = [0u8; 16];
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let timestamp_nanos = now.as_nanos();
+    nonce[0..8].copy_from_slice(&timestamp_nanos.to_le_bytes()[0..8]);
+    OsRng.fill_bytes(&mut nonce[8..16]);
+    nonce
+}
+
+pub fn encrypt_key(mut input_data: Vec<u8>, output_file: &str, keymaterial: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+    let nonce = generate_nonce();
+
+    let mut cipher = Aes256Ctr::new(keymaterial.into(), &nonce.into());
+    cipher.apply_keystream(&mut input_data);
+    let outdata: &[u8] = &input_data;
+    let mut output = File::create(output_file)?;
+    output.write_all(&nonce)?;
+    output.write_all(&outdata)?;
+
     Ok(())
 }
 
-#[allow(deprecated)]
-fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
-    let mut json_started = false;
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
-    let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
-    let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-    let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to decrypt key: {}", e)))?;
-    let file_path = Path::new(file_path);
-    let metadata = try_print_json!(
-        file_path.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata: {}", e))),
-        json_started
-    );
-    let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
-        json_started
-    );
-    let mut bytes = Vec::new();
-    try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
-        json_started
-    );
-    let num_bytes = bytes.len();
-    let num_bits = num_bytes * 8;
-    let byte_distribution = bytes.iter().collect::<std::collections::HashSet<_>>().len() as f64 / num_bytes as f64;
-    let file_is_open = match OpenOptions::new().read(true).write(true).open(file_path) {
-        Ok(_) => false,
-        Err(_) => true,
-    };
-    let chronox: String = Utc::now().to_string();
-    let mut hasher = Shake256::default();
-    hasher.update(&bytes);
-    let mut resulto = hasher.finalize_xof();
-    let mut shake256 = [0u8; 10];
-    let _ = resulto.read(&mut shake256);
-    json_started = true;
-    println!("{{");
-    println!("{:?}: {{", file_path);
-    println!("  \"Checksum SHA3 SHAKE256 10\": \"{:?}\",", shake256);
-    println!("  \"Report time\": \"{}\",", chronox);
-    let num_io_blocks = metadata.blocks();
-    println!("  \"Number of IO blocks\": \"{}\",", num_io_blocks);
-    let blocksize = metadata.blksize();
-    println!("  \"Block size\": \"{}\",", blocksize);
-    let inode = metadata.ino();
-    println!("  \"Inode\": \"{}\",", &inode);
-    println!("  \"Total as bytes\": \"{}\",", &num_bytes);
-    println!("  \"Total as kilobytes\": \"{}\",", &num_bytes / 1024);
-    println!("  \"Total as megabytes\": \"{}\",", &num_bytes / (1024 * 1024));
-    println!("  \"Total as bits\": \"{}\",", num_bits);
-    println!("  \"Byte distribution\": \"{}\",", byte_distribution);
-    let created: DateTime<Utc> = try_print_json!(
-        metadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get created timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let modified: DateTime<Utc> = try_print_json!(
-        metadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get modified timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let access: DateTime<Utc> = try_print_json!(
-        metadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get accessed timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let changed: DateTime<Utc> = {
-        let ctime = metadata.ctime();
-        let ctimesec = metadata.ctime_nsec() as u32;
-        let naive_datetime = try_print_json!(
-            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid changed timestamp")),
-            json_started
-        );
-        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
-    };
-    println!("  \"Created timestamp (UTC)\": \"{}\",", created);
-    println!("  \"Modified timestamp (UTC)\": \"{}\",", modified);
-    println!("  \"Accessed timestamp (UTC)\": \"{}\",", access);
-    println!("  \"Changed timestamp (UTC)\": \"{}\",", changed);
-    let permission = metadata.permissions();
-    let mode = permission.mode();
-    println!("  \"Permissions\": \"{:o}\",", mode);
-    let uid = metadata.uid();
-    let gid = metadata.gid();
-    let owner = match get_user_by_uid(uid) {
-        Some(user) => user.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    let group = match get_group_by_gid(gid) {
-        Some(group) => group.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    println!("  \"Owner\": \"{} (uid: {})\",", owner, uid);
-    println!("  \"Group\": \"{} (gid: {})\",", group, gid);
-    if file_is_open {
-        println!("  \"Open\": \"File is currently open by another program... signing anyway!\",");
-    } else {
-        println!("  \"Open\": \"File is not open by another program. Signing...\",");
-    }
-    let keypath = Path::new(&key_path);
-    let pubpath = Path::new(&pub_path);
-    let kmetadata = try_print_json!(
-        keypath.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata for key: {}", e))),
-        json_started
-    );
-    let mut kpubf = try_print_json!(
-        File::open(&pubpath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the public key: {}", e))),
-        json_started
-    );
-    let mut pubbytes = Vec::new();
-    try_print_json!(
-        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the public key: {}", e))),
-        json_started
-    );
-    let keys: Keypair = Keypair::loadit(pubbytes, kbytes);
-    let msg = &bytes;
-    let sig = keys.sign(&msg);
-    let spath = Path::new(sig_path);
-    let mut sigoutput = try_print_json!(
-        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
-        json_started
-    );
-    try_print_json!(
-        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
-        json_started
-    );
-    println!("  \"Dilithium signature file\": \"{}\",", sig_path);
-    println!("  \"Dilithium signing key\": \"{}\",", key_path);
-    let kinode = kmetadata.ino();
-    println!("  \"Key Inode\": \"{}\",", &kinode);
-    let kcreated: DateTime<Utc> = try_print_json!(
-        kmetadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key created timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let kmodified: DateTime<Utc> = try_print_json!(
-        kmetadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key modified timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let kaccess: DateTime<Utc> = try_print_json!(
-        kmetadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key accessed timestamp.")).map(DateTime::from),
-        json_started
-    );
-    let kchanged: DateTime<Utc> = {
-        let ctime = kmetadata.ctime();
-        let ctimesec = kmetadata.ctime_nsec() as u32;
-        let naive_datetime = try_print_json!(
-            chrono::NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid key changed timestamp")),
-            json_started
-        );
-        TimeZone::from_utc_datetime(&Utc, &naive_datetime)
-    };
-    println!("  \"Key Created timestamp (UTC)\": \"{}\",", kcreated);
-    println!("  \"Key Modified timestamp (UTC)\": \"{}\",", kmodified);
-    println!("  \"Key Accessed timestamp (UTC)\": \"{}\",", kaccess);
-    println!("  \"Key Changed timestamp (UTC)\": \"{}\",", kchanged);
-    let kpermission = kmetadata.permissions();
-    let kmode = kpermission.mode();
-    println!("  \"Key Permissions\": \"{:o}\",", kmode);
-    let kuid = kmetadata.uid();
-    let kgid = kmetadata.gid();
-    let kowner = match get_user_by_uid(kuid) {
-        Some(user) => user.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    let kgroup = match get_group_by_gid(kgid) {
-        Some(group) => group.name().to_string_lossy().into_owned(),
-        None => "-".to_string(),
-    };
-    println!("  \"Key Owner\": \"{} (uid: {})\",", kowner, uid);
-    println!("  \"Key Group\": \"{} (gid: {})\"", kgroup, gid);
-    println!(" }}");
-    println!("}}");
-    Ok(())
-}
+pub fn decrypt_key(input_file: &str, keymaterial: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let mut file = File::open(input_file)?;
+    let mut nonce = [0u8; 16];
+    file.read_exact(&mut nonce)?;
+    let mut data = Vec::new();
+    file.read_to_end(&mut data)?;
+    let mut cipher = Aes256Ctr::new(keymaterial.into(), &nonce.into());
+    cipher.apply_keystream(&mut data);
 
-fn donkout() -> Result<(), Box<dyn StdError>> {
-    Ok(())
-}
-
-fn main() {
-    if let Err(e) = run() {
-        print_error_json(&e.to_string());
-        std::process::exit(1);
-    }
-}
-
-fn run() -> Result<(), Box<dyn StdError>> {
-    let mut file = File::open("./wormsign.toml")
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open wormsign.toml: {}", e)))?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read wormsign.toml: {}", e)))?;
-    let config: Config = toml::from_str(&contents)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to parse wormsign.toml: {}", e)))?;
-    let args: Vec<String> = env::args().collect();
-    let file_path = &config.file_path;
-    let pub_path = &config.pub_path;
-    let sig_path = &config.sig_path;
-    let key_path = &config.key_path;
-    for arg in args.iter() {
-        match arg.as_str() {
-            "-v" => verf(file_path, pub_path, sig_path)?,
-            "-g" => keygen(key_path, pub_path)?,
-            "-s" => sig(file_path, key_path, pub_path, sig_path)?,
-            _ => donkout()?
-        }
-    }
-    Ok(())
+    Ok(data)
 }
