@@ -41,7 +41,7 @@ $ wormsign -g # generate a keypair only
 
 ## Key encryption
 
-The signing key is encrypted after generation and left as ciphertext on the disk. When signing, wormsign reads the ciphertext and decrypts the signing key in RAM only.
+The signing key is encrypted after generation before writing to disk, and left as ciphertext on the disk. When signing, wormsign reads the ciphertext and decrypts the signing key in (RAM) only.
 
 <b>If an invalid password to decrypt the signing key is supplied while attempting to sign, wormsign will create a signature with the key ciphertext as the signing key, but that signature will not match the public key and verifications then fail.</b>
 
