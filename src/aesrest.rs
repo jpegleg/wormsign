@@ -38,7 +38,6 @@ fn generate_nonce() -> [u8; 16] {
 
 pub fn encrypt_key(mut input_data: Vec<u8>, output_file: &str, keymaterial: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
     let nonce = generate_nonce();
-
     let mut cipher = Aes256Ctr::new(keymaterial.into(), &nonce.into());
     cipher.apply_keystream(&mut input_data);
     let outdata: &[u8] = &input_data;
