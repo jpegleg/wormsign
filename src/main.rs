@@ -48,21 +48,18 @@ macro_rules! try_print_json {
 
 fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn StdError>> {
     let keys = Keypair::generate();
-    let mut output = File::create(key_path)
+    let _ = File::create(key_path)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create key file {}: {}", key_path, e)))?;
     set_permissions(&key_path, PermissionsExt::from_mode(0o600))
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to set permissions on {}: {}", key_path, e)))?;
-    output.write_all(&keys.expose_secret())
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write secret key: {}", e)))?;
     let mut puboutput = File::create(pub_path)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e)))?;
     puboutput.write_all(&keys.public)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)))?;
-    print!("Enter password: ");
     std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     let mut password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-    aesrest::encrypt_file(key_path, key_path, &keymaterial)
+    aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to encrypt key file: {}", e)))?;
     keymaterial.zeroize();
     password.zeroize();
@@ -190,11 +187,10 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
 #[allow(deprecated)]
 fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
     let mut json_started = false;
-    print!("Enter password: ");
     std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-    let kbytes = aesrest::decrypt_ram(key_path, &keymaterial)
+    let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to decrypt key: {}", e)))?;
     let file_path = Path::new(file_path);
     let metadata = try_print_json!(
