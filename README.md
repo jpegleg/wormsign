@@ -45,6 +45,14 @@ The signing key is encrypted after generation before writing to disk, and left a
 
 <b>If an invalid password to decrypt the signing key is supplied while attempting to sign, wormsign will create a signature with the key ciphertext as the signing key, but that signature will not match the public key and verifications then fail.</b>
 
+## One-time-use signing
+
+When the `-ats` option is passed to `wormsign`, instead of reading the key files, a new key is generated for the signing and only the public key is saved.
+
+## Skipping metadata output
+
+The `-as` and `-av` options are the same as `-a` and `-v` but without the file metadata collection. This is useful when that information is not desired or not supported.
+
 ## TOML config file
 
 The tool uses a config file in the working directory named `wormsign.toml` to specify the keys, targets, and signature output locations. Edit that file to contain the values you want to use. There is an example `wormsign.toml` included that is as follows:
@@ -69,5 +77,6 @@ Defaults:
 - "randomized signatures" enabled
 - Dilithium-AES for AES-256 sampling and expanding instead of SHAKE
 - Dilithium5 protected (AES-256 encrypted) signing key generation (-g)
-- Dilithium5 file signing (-s)
-- Dilithium5 signature verification (-v)
+- Dilithium5 file signing with ephemeral one-time-use signing (-ats)
+- Dilithium5 file signing with encrypted key file (-s, -as)
+- Dilithium5 signature verification (-v, -av)
