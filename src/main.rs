@@ -57,6 +57,8 @@ fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn StdError>> {
     puboutput.write_all(&keys.public)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)))?;
     std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
+    // STDERR on prompt so that output stays valid JSON, useful for redirects etc
+    eprintln!("Enter key password then press enter (will not be displayed):");
     let mut password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial)
@@ -188,6 +190,8 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
 fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
     let mut json_started = false;
     std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
+    // STDERR on prompt so that output stays valid JSON, useful for redirects etc
+    eprintln!("Enter key password then press enter (will not be displayed):");
     let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
