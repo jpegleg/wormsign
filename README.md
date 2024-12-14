@@ -51,7 +51,7 @@ When the `-ats` option is passed to `wormsign`, instead of reading the key files
 
 ## Skipping metadata output
 
-The `-as` and `-av` options are the same as `-a` and `-v` but without the file metadata collection. This is useful when that information is not desired or not supported.
+The `-as` and `-av` options are the same as `-s` and `-v` but without the file metadata collection. This is useful when that information is not desired or not supported.
 
 ## TOML config file
 
