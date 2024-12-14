@@ -448,7 +448,7 @@ fn asig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resu
         json_started
     );
     println!("  \"Dilithium signature file\": \"{}\",", sig_path);
-    println!("  \"Dilithium signing key\": \"{}\",", key_path);
+    println!("  \"Dilithium signing key\": \"{}\"", key_path);
     println!(" }}");
     println!("}}");
     Ok(())
@@ -492,7 +492,7 @@ fn autosig(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dy
         json_started
     );
     println!("  \"Dilithium signature file\": \"{}\",", sig_path);
-    println!("  \"Dilithium public key\": \"{}\",", pub_path);
+    println!("  \"Dilithium public key\": \"{}\"", pub_path);
     println!(" }}");
     println!("}}");
     Ok(())
