@@ -187,6 +187,49 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
 }
 
 #[allow(deprecated)]
+fn averf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
+    let json_started = true;
+    let file_path = Path::new(file_path);
+    println!("{{");
+    println!("{:?}: {{", file_path);
+    let mut bytes = Vec::new();
+    let mut file = try_print_json!(
+        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    try_print_json!(
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    let mut kfile = try_print_json!(
+        File::open(&pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the key: {}", e))),
+        json_started
+    );
+    let mut kbytes = Vec::new();
+    try_print_json!(
+        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the key: {}", e))),
+        json_started
+    );
+    let mut sfile = try_print_json!(
+        File::open(&sig_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the signature file: {}", e))),
+        json_started
+    );
+    let mut sbytes = Vec::new();
+    try_print_json!(
+        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the signature file: {}", e))),
+        json_started
+    );
+    let msg = &bytes;
+    let sig_verify = verify(&sbytes, &msg, &kbytes);
+    let statusig = sig_verify.is_ok();
+    println!("  \"Verification Result\": \"{}\"", statusig);
+    println!(" }}");
+    println!("}}");
+    Ok(())
+}
+
+
+#[allow(deprecated)]
 fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
     let mut json_started = false;
     std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
@@ -360,7 +403,113 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     Ok(())
 }
 
+#[allow(deprecated)]
+fn asig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
+    let json_started = true;
+    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
+    // STDERR on prompt so that output stays valid JSON, useful for redirects etc
+    eprintln!("Enter key password then press enter (will not be displayed):");
+    let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
+    let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
+    let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to decrypt key: {}", e)))?;
+    let file_path = Path::new(file_path);
+    println!("{{");
+    println!("{:?}: {{", file_path);
+    let pubpath = Path::new(&pub_path);
+    let mut kpubf = try_print_json!(
+        File::open(&pubpath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the public key: {}", e))),
+        json_started
+    );
+    let mut bytes = Vec::new();
+    let mut file = try_print_json!(
+        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    try_print_json!(
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    let mut pubbytes = Vec::new();
+    try_print_json!(
+        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the public key: {}", e))),
+        json_started
+    );
+    let keys: Keypair = Keypair::loadit(pubbytes, kbytes);
+    let msg = &bytes;
+    let sig = keys.sign(&msg);
+    let spath = Path::new(sig_path);
+    let mut sigoutput = try_print_json!(
+        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
+        json_started
+    );
+    try_print_json!(
+        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
+        json_started
+    );
+    println!("  \"Dilithium signature file\": \"{}\",", sig_path);
+    println!("  \"Dilithium signing key\": \"{}\",", key_path);
+    println!(" }}");
+    println!("}}");
+    Ok(())
+}
+
+#[allow(deprecated)]
+fn autosig(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
+    let json_started = true;
+    let file_path = Path::new(file_path);
+    println!("{{");
+    println!("{:?}: {{", file_path);
+    let mut bytes = Vec::new();
+    let mut file = try_print_json!(
+        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    try_print_json!(
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        json_started
+    );
+    let keys: Keypair = Keypair::generate();
+    //let  = Path::new(&pub_path);
+    let mut pubout = try_print_json!(
+        File::create(pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e))),
+        json_started
+    );
+    try_print_json!(
+        pubout.write_all(&keys.public).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key to file: {}", e))),
+        json_started
+    );
+
+    let msg = &bytes;
+    let sig = keys.sign(&msg);
+    let spath = Path::new(sig_path);
+    let mut sigoutput = try_print_json!(
+        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
+        json_started
+    );
+    try_print_json!(
+        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
+        json_started
+    );
+    println!("  \"Dilithium signature file\": \"{}\",", sig_path);
+    println!("  \"Dilithium public key\": \"{}\",", pub_path);
+    println!(" }}");
+    println!("}}");
+    Ok(())
+}
+
 fn donkout() -> Result<(), Box<dyn StdError>> {
+    Ok(())
+}
+
+fn help() -> Result<(), Box<dyn StdError>> {
+    println!("wormsign - a program for creating Dilithium keypairs, \
+        signatures, and verifying Dilithium signatures\n\n  -v verify \n  -s sign\n  -g generate keypair\n  -av verify without metadata collection\n  -as sign without metadata collection\n  -ats autonomous sign with one-time-use key (private key not saved)\n  -h print this menu\n  --version print the wormsign version\n");
+    Ok(())
+}
+
+fn version() -> Result<(), Box<dyn StdError>> {
+    println!("wormsign version 0.1.4\n");
     Ok(())
 }
 
@@ -387,8 +536,13 @@ fn run() -> Result<(), Box<dyn StdError>> {
     for arg in args.iter() {
         match arg.as_str() {
             "-v" => verf(file_path, pub_path, sig_path)?,
+            "-av" => averf(file_path, pub_path, sig_path)?,
             "-g" => keygen(key_path, pub_path)?,
             "-s" => sig(file_path, key_path, pub_path, sig_path)?,
+            "-as" => asig(file_path, key_path, pub_path, sig_path)?,
+            "-ats" => autosig(file_path, pub_path, sig_path)?,
+            "-h" => help()?,
+            "--version" => version()?,
             _ => donkout()?
         }
     }
