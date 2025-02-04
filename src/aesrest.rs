@@ -12,16 +12,16 @@ use argon2::Argon2;
 type Aes256Ctr = Ctr64BE<Aes256>;
 
 pub fn a2(password: &[u8], salt: &[u8]) -> [u8; 32] {
-    /// Process a salt and key material input (password) with Argon2.
+    // Process a salt and key material input (password) with Argon2.
     let mut okm = [0u8; 32];
     let _ = Argon2::default().hash_password_into(password, salt, &mut okm);
     okm
 }
 
 pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
-    /// This function includes the fixed salt and mixes the salt
-    /// with the provided input material (password). The salt and password
-    /// go through Argon2, and then SHAKE256.
+    // This function includes the fixed salt and mixes the salt
+    // with the provided input material (password). The salt and password
+    // go through Argon2, and then SHAKE256.
     let mut hasher = Shake256::default();
     let salt = b"07f9c8d6ab8d13f8bf68bcd8464186de";
     hasher.update(&a2(password, salt));
@@ -32,9 +32,9 @@ pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
 }
 
 fn generate_nonce() -> [u8; 16] {
-    /// This function generates a nonce for counter mode AES-256
-    /// that is baesd on truncated epoch nanoseconds + 16 bytes
-    /// from system entropy.
+    // This function generates a nonce for counter mode AES-256
+    // that is baesd on truncated epoch nanoseconds + 16 bytes
+    // from system entropy.
     let mut nonce = [0u8; 16];
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let timestamp_nanos = now.as_nanos();
@@ -44,8 +44,8 @@ fn generate_nonce() -> [u8; 16] {
 }
 
 pub fn encrypt_key(mut input_data: Vec<u8>, output_file: &str, keymaterial: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
-    /// This function encrypts the Dilithium secret key with the resulting key material,
-    /// writing the ciphertext to a file.
+    // This function encrypts the Dilithium secret key with the resulting key material,
+    // writing the ciphertext to a file.
     let nonce = generate_nonce();
     let mut cipher = Aes256Ctr::new(keymaterial.into(), &nonce.into());
     cipher.apply_keystream(&mut input_data);
@@ -58,8 +58,8 @@ pub fn encrypt_key(mut input_data: Vec<u8>, output_file: &str, keymaterial: &[u8
 }
 
 pub fn decrypt_key(input_file: &str, keymaterial: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    /// Read the ciphertext key file and decrypt it, returning the private key
-    /// data to the function caller for signing.
+    // Read the ciphertext key file and decrypt it, returning the private key
+    // data to the function caller for signing.
     let mut file = File::open(input_file)?;
     let mut nonce = [0u8; 16];
     file.read_exact(&mut nonce)?;
