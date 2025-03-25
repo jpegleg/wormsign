@@ -80,3 +80,15 @@ Defaults:
 - Dilithium5 file signing with ephemeral one-time-use signing (-ats)
 - Dilithium5 file signing with encrypted key file (-s, -as)
 - Dilithium5 signature verification (-v, -av)
+
+## wormsign-confgen, the config generation tool
+
+There is a tool included that can generate `wormsign.toml` files from CLI arguments named `wormsign-confgen`. 
+
+Pass in the arguments to `wormsign-confgen` like so:
+
+`wormsign-confgen <file_path> <pub_key_path> <sig_path> <private_key_path>`
+
+## Additional scripting with Elvish
+
+If you use the [elvish](https://elv.sh/r) shell, I have included some examples in [elvish-pathway](https://github.com/jpegleg/elvish-pathway/tree/main), including this script to bulk sign https://github.com/jpegleg/elvish-pathway/blob/main/scripts/usul.elv.
