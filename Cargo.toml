@@ -1,6 +1,6 @@
 [package]
 name = "wormsign"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 [dependencies]
@@ -23,3 +23,7 @@ mode3 = []
 mode5 = []
 aes = []
 random_signing = []
+
+[[bin]]
+name = "wormsign-confgen"
+path = "src/confgen.rs"
