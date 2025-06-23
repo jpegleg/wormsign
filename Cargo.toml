@@ -2,7 +2,7 @@
 name = "wormsign"
 version = "0.1.5"
 edition = "2021"
-authors = "Keegan Bowen <carefuldata@protonmail.com>"
+authors = ["Keegan Bowen <carefuldata@protonmail.com>"]
 license = "MIT"
 description = "Dilithium5 signature tool"
 homepage = "https://carefuldata.com"
