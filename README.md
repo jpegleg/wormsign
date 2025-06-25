@@ -1,17 +1,18 @@
-
 ![cdlogo](https://carefuldata.com/images/cdlogo.png)
 
 # wormsign
 
 This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures.
 
-This tool includes a modified version of [dilithium library](https://github.com/Argyle-Software/dilithium). The modification is only to enable writing and reading keys from files, something that library doesn't yet have support for. The dilithium cryptography itself comes entirely from that library. Once support for the same functionality is included in that library (see https://github.com/Argyle-Software/dilithium/issues/11), I'll likely switch wormsign to pulling the library from crates.io normally.
+This tool includes a modified version of this [dilithium library](https://github.com/Argyle-Software/dilithium). The modification is only to enable writing and reading keys from files, something that library doesn't yet have support for. The dilithium cryptography itself comes entirely from that library. Once support for the same functionality is included in that library (see https://github.com/Argyle-Software/dilithium/issues/11), I'll likely switch wormsign to pulling the library from crates.io normally.
 
 Wormsign is available on crates.io and can be installed using `cargo`:
 
 ```
 cargo install wormsign
 ```
+
+Also see the releases section on github for binary downloads: https://github.com/jpegleg/wormsign/releases/
 
 ## Usage
 
@@ -72,6 +73,12 @@ file_path = "./Cargo.toml"
 
 So if I wanted to sign my new package `./workspace/things/thing1.rpm` I would set that as the `file_path`, and with that I might set the `sig_path` to something like `./workspace/things/thing1.rpm.dilithium-sig.bin`.
 
+Each value is required, even if not used. For example, even when doing a verification with no key, a key_path must be set. For cases like this, we can set the key_path to anything, such as `NA`.
+
+A wormsign.toml is required to use any features of wormsign.
+
+The `wormsign-confgen` tool can be used to generate a `wormsign.toml` based on arguments passed to `wormsign-confgen`. See more about the wormsign-confgen tool in the section below.
+
 ## Wormsign Features
 
 The most secure available defaults are set: Dilithium5, AES, and random signatures.
@@ -89,11 +96,13 @@ Defaults:
 
 ## wormsign-confgen, the config generation tool
 
-There is a tool included that can generate `wormsign.toml` files from CLI arguments named `wormsign-confgen`. 
+There is a tool included that can generate `wormsign.toml` files from CLI arguments named `wormsign-confgen`.
 
 Pass in the arguments to `wormsign-confgen` like so:
 
 `wormsign-confgen <file_path> <pub_key_path> <sig_path> <private_key_path>`
+
+Wormsign-confgen is especially useful for fully automated/scripted uses.
 
 ## Additional scripting with Elvish
 
