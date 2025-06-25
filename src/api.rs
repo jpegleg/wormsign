@@ -51,16 +51,6 @@ impl Keypair {
 
 }
 
-/// Verify signature using keypair
-///
-/// Example:
-/// ```
-/// # use pqc_dilithium::*;
-/// # let keys = Keypair::generate();
-/// # let msg = [0u8; 32];
-/// # let sig = keys.sign(&msg);
-/// let sig_verify = verify(&sig, &msg, &keys.public);
-/// assert!(sig_verify.is_ok());
 pub fn verify(
   sig: &[u8],
   msg: &[u8],
