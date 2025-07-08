@@ -7,7 +7,7 @@ pub struct Keypair {
   secret: [u8; SECRETKEYBYTES],
 }
 
-/// Secret key elided
+/// Secret key elided.
 impl std::fmt::Debug for Keypair {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "public: {:?}\nsecret: <elided>", self.public)
@@ -51,6 +51,7 @@ impl Keypair {
 
 }
 
+/// Verify a signature by supplying the signature, message, and public key as &[u8].
 pub fn verify(
   sig: &[u8],
   msg: &[u8],
