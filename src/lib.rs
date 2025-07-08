@@ -30,18 +30,12 @@ mod tests {
     }
 
     #[test]
-    #[allow(unused)]
     fn encrypttest() {
-      use crate::verify;
       use crate::Keypair;
-      use serde::Deserialize;
       use crate::aesrest;
-      use std::env;
-      use std::error::Error as StdError;
-      use std::os::unix::fs::{PermissionsExt, MetadataExt};
-      use std::fs::{set_permissions, File, OpenOptions};
-      use std::path::Path;
-      use std::io::{self, Read, Write};
+      use std::os::unix::fs::PermissionsExt;
+      use std::fs::{set_permissions, File};
+      use std::io::{self, Write};
       use zeroize::Zeroize;
 
       let keys = Keypair::generate();
@@ -60,18 +54,12 @@ mod tests {
     }
 
     #[test]
-    #[allow(unused)]
     fn decrypttest() {
-      use crate::verify;
       use crate::Keypair;
-      use serde::Deserialize;
       use crate::aesrest;
-      use std::env;
-      use std::error::Error as StdError;
-      use std::os::unix::fs::{PermissionsExt, MetadataExt};
-      use std::fs::{set_permissions, File, OpenOptions};
-      use std::path::Path;
-      use std::io::{self, Read, Write};
+      use std::os::unix::fs::PermissionsExt;
+      use std::fs::{set_permissions, File};
+      use std::io::{self,  Write};
       use zeroize::Zeroize;
 
       let keys = Keypair::generate();
