@@ -2,6 +2,10 @@ use std::fs::File;
 use std::env;
 use std::io::{self, Write};
 
+/// Supply the path to the file to sign, the private key path, the public key path, and the signature path.
+/// When used for verification, the private key value still must be set to something, even if no private key is used.
+/// Suggest using a something like "./NA" or "./verify_only" etc etc, so it is clear that no real private key is used,
+/// especially when the system is made for verification only.
 fn write_config(file_path: &str, key: &str, pub_key: &str, sig_path: &str) -> io::Result<()> {
     let config_content = format!(
         r#"key_path = "{}"
