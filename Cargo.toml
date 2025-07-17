@@ -9,7 +9,7 @@ homepage = "https://carefuldata.com"
 repository = "https://github.com/jpegleg/wormsign"
 readme = "README.md"
 categories = ["cryptography"]
-keywords = ["pqc", "cli", "signature", "dilithium", "key-pair", "signature-verification", "key-encryption", "post-quantum-cryptography", "dilithium5", "aes-256", "signing", "digital-signature", "asymmetric-cryptography"]
+keywords = ["pqc", "cli", "signature", "dilithium", "post-quantum-cryptography"]
 
 [dependencies]
 rpassword = "7.2"
