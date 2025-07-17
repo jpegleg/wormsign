@@ -12,6 +12,14 @@ Wormsign is available on crates.io and can be installed using `cargo`:
 cargo install wormsign
 ```
 
+It can of course be compiled from source and installed:
+
+```
+cargo build --release
+sudo cp target/release/wormsign /usr/local/bin/wormsign
+
+```
+
 Also see the releases section on github for binary downloads: https://github.com/jpegleg/wormsign/releases/
 
 ## Usage
