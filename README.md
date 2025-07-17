@@ -89,7 +89,9 @@ The `wormsign-confgen` tool can be used to generate a `wormsign.toml` based on a
 
 ## Wormsign Features
 
-The most secure available defaults are set: Dilithium5, AES, and random signatures.
+The most secure available defaults are set: Dilithium5, and random signatures.
+
+The AES mode instead of SHAKE is helpful for increasing speed on some hardware.
 
 Those features can be adjusted at compile time in the `Cargo.toml`.
 
