@@ -5,7 +5,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use aes::Aes256;
 use ctr::cipher::{KeyIvInit, StreamCipher};
 use ctr::Ctr64BE;
-use rand::{RngCore, rngs::OsRng};
+use rand::TryRngCore;
+use rand::rngs::OsRng;
 use sha3::{Shake256, digest::{Update, ExtendableOutput, XofReader}};
 use argon2::Argon2;
 
@@ -42,7 +43,7 @@ fn generate_nonce() -> [u8; 16] {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let timestamp_nanos = now.as_nanos();
     nonce[0..8].copy_from_slice(&timestamp_nanos.to_le_bytes()[0..8]);
-    OsRng.fill_bytes(&mut nonce[8..16]);
+    OsRng.try_fill_bytes(&mut nonce[8..16]);
     nonce
 }
 
