@@ -104,6 +104,15 @@ Defaults:
 - Dilithium5 file signing with encrypted key file (-s, -as)
 - Dilithium5 signature verification (-v, -av)
 
+## Project promises
+
+This project will never use AI-slop. All code is reviewed, tested, implemented by a human that is academically trained in cryptography and information security.
+This repository and the crates.io repository is carefully managed and protected.
+
+This project will never break backwards compatibility with signature validation.
+
+This project will be maintained as best as is reasonable.
+
 ## wormsign-confgen, the config generation tool
 
 There is a tool included that can generate `wormsign.toml` files from CLI arguments named `wormsign-confgen`.
