@@ -109,7 +109,7 @@ Defaults:
 This project will never use AI-slop. All code is reviewed, tested, implemented by a human that is academically trained in cryptography and information security.
 This repository and the crates.io repository is carefully managed and protected.
 
-This project will never break backwards compatibility with signature validation.
+This project will never break backwards compatibility in releases regarding the signature validation.
 
 This project will be maintained as best as is reasonable.
 
