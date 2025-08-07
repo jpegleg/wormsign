@@ -511,7 +511,7 @@ fn help() -> Result<(), Box<dyn StdError>> {
 
 /// Print the version.
 fn version() -> Result<(), Box<dyn StdError>> {
-    println!("wormsign version 0.1.8\n");
+    println!("{{\"Version\": \"0.1.8\"}}");
     Ok(())
 }
 
