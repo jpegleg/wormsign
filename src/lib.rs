@@ -12,12 +12,11 @@ mod reduce;
 mod rounding;
 mod sign;
 mod symmetric;
+mod aesrest;
 
 pub use params::*;
-
 pub use api::*;
-
-mod aesrest;
+pub use aesrest::*;
 
 #[cfg(test)]
 mod tests {
