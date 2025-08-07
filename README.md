@@ -2,9 +2,9 @@
 
 # wormsign
 
-This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures.
+This is a CLI tool used to create [Dilithium](https://pq-crystals.org/dilithium/index.shtml) keys, signatures, and to verify signatures. Some functionality is also exposed as a library that can be imported into your project.
 
-This tool includes a modified version of this [dilithium library](https://github.com/Argyle-Software/dilithium). The modification is to enable writing and reading keys from files, something that library doesn't yet have support for. Additionally wormsign has modified that dilithium library to upgrade the `rand` crate and will maintain the library within itself as long as needed. The dilithium cryptography itself comes entirely from that library.
+This tool includes a modified version of this [dilithium library](https://github.com/Argyle-Software/dilithium). The modification is to enable writing and reading keys from files, something that original library doesn't yet have support for. Additionally wormsign has modified that dilithium library to upgrade the `rand` crate and will maintain the library within itself as long as needed. The dilithium cryptography itself comes entirely from that library.
 
 Wormsign is available on crates.io and can be installed using `cargo`:
 
