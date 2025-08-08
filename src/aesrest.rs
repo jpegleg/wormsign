@@ -14,7 +14,7 @@ type Aes256Ctr = Ctr64BE<Aes256>;
 
 /// Process a salt and key material input (password) with Argon2.
 #[allow(unused)]
-pub fn a2(password: &[u8], salt: &[u8]) -> [u8; 32] {
+pub fn a1(password: &[u8], salt: &[u8]) -> [u8; 32] {
     let mut okm = [0u8; 32];
     let _ = Argon2::default().hash_password_into(password, salt, &mut okm);
     okm
@@ -25,7 +25,7 @@ pub fn a2(password: &[u8], salt: &[u8]) -> [u8; 32] {
 /// go through Argon2, and then SHAKE256.
 #[allow(unused)]
 pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
-        let mut hasher = Shake256::default();
+    let mut hasher = Shake256::default();
     let salt = b"07f9c8d6ab8d13f8bf68bcd8464186de";
     hasher.update(&a2(password, salt));
     let mut reader = hasher.finalize_xof();
