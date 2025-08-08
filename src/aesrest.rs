@@ -27,7 +27,7 @@ pub fn a1(password: &[u8], salt: &[u8]) -> [u8; 32] {
 pub fn derive_key(password: &[u8], length: usize) -> Vec<u8> {
     let mut hasher = Shake256::default();
     let salt = b"07f9c8d6ab8d13f8bf68bcd8464186de";
-    hasher.update(&a2(password, salt));
+    hasher.update(&a1(password, salt));
     let mut reader = hasher.finalize_xof();
     let mut key = vec![0u8; length];
     XofReader::read(&mut reader, &mut key);
