@@ -55,7 +55,6 @@ macro_rules! try_print_json {
 }
 
 
-
 /// This is the verification function used to verify a Dilithium signature.
 #[allow(deprecated)]
 fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
@@ -225,9 +224,9 @@ fn averf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn 
 #[allow(deprecated)]
 fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
     let mut json_started = false;
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
+    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
@@ -402,9 +401,9 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
 #[allow(deprecated)]
 fn asig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn StdError>> {
     let json_started = true;
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
+    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
