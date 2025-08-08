@@ -41,9 +41,9 @@ pub fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn StdError>> {
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e)))?;
     puboutput.write_all(&keys.public)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)))?;
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
+    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
     let mut password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
     let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial)
