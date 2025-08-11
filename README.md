@@ -123,6 +123,15 @@ Pass in the arguments to `wormsign-confgen` like so:
 
 Wormsign-confgen is especially useful for fully automated/scripted uses.
 
+## giant-spellbook tool
+
+There is another tool named [giant-spellbook](https://github.com/jpegleg/giant-spellbook) that is compatible with wormsign because it imports wormsign as a library.
+The signing, generating, and verififying operations can be done with giant-spellbook as well, without a TOML config file.
+
+If you prefer not to have a wormsign.toml, then giant-spellbook is the tool for you.
+
+
+
 ## Additional scripting with Elvish
 
 If you use the [elvish](https://elv.sh/r) shell, I have included some examples in [elvish-pathway](https://github.com/jpegleg/elvish-pathway/tree/main), including this script to bulk sign https://github.com/jpegleg/elvish-pathway/blob/main/scripts/usul.elv.
