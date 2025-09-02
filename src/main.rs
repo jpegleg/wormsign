@@ -503,14 +503,14 @@ fn donkout() -> Result<(), Box<dyn StdError>> {
 
 /// Print CLI help information.
 fn help() -> Result<(), Box<dyn StdError>> {
-    println!("wormsign - a program for creating Dilithium keypairs, \
-        signatures, and verifying Dilithium signatures\n\n  -v verify \n  -s sign\n  -g generate keypair\n  -av verify without metadata collection\n  -as sign without metadata collection\n  -ats autonomous sign with one-time-use key (private key not saved)\n  -h print this menu\n  --version print the wormsign version\n");
+    println!("wormsign - a program for creating Dilithium5-AES keypairs, \
+        signatures, and verifying Dilithium5 signatures\n\n  -v verify \n  -s sign\n  -g generate keypair\n  -av verify without metadata collection\n  -as sign without metadata collection\n  -ats autonomous sign with one-time-use key (private key not saved)\n  -h print this menu\n  --version print the wormsign version\n");
     Ok(())
 }
 
 /// Print the version.
 fn version() -> Result<(), Box<dyn StdError>> {
-    println!("{{\"Version\": \"0.1.8\"}}");
+    println!("{{\"Version\": \"0.1.9\"}}");
     Ok(())
 }
 
