@@ -24,6 +24,7 @@ mod aesrest;
 pub use params::*;
 pub use api::*;
 pub use aesrest::*;
+pub use randombytes::*;
 
 /// This function generates new Dilithium keys, keeping the private protected.
 /// The protection is from AES256 on the private key, writing only the ciphertext to disk for re-use.
