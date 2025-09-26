@@ -510,7 +510,7 @@ fn help() -> Result<(), Box<dyn StdError>> {
 
 /// Print the version.
 fn version() -> Result<(), Box<dyn StdError>> {
-    println!("{{\"Version\": \"0.1.9\"}}");
+    println!("{{\"Version\": \"0.1.10\"}}");
     Ok(())
 }
 
