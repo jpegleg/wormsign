@@ -7,7 +7,7 @@ use std::io::{self, Read, Write};
 use serde::Deserialize;
 use sha3::{Shake256, digest::{Update, ExtendableOutput}};
 use chrono::{TimeZone, NaiveDateTime, DateTime, Utc};
-use users::{get_user_by_uid, get_group_by_gid};
+use uzers::{get_user_by_uid, get_group_by_gid};
 use rpassword::read_password;
 
 use wormsign::Keypair;
