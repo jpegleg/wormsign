@@ -35,20 +35,20 @@ pub use randombytes::*;
 pub fn keygen(key_path: &str, pub_path: &str) -> Result<(), Box<dyn StdError>> {
   let keys = Keypair::generate();
     let _ = File::create(key_path)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create key file {}: {}", key_path, e)))?;
-    set_permissions(&key_path, PermissionsExt::from_mode(0o600))
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to set permissions on {}: {}", key_path, e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to create key file {}: {}", key_path, e)))?;
+    set_permissions(key_path, PermissionsExt::from_mode(0o600))
+        .map_err(|e| io::Error::other(format!("Failed to set permissions on {}: {}", key_path, e)))?;
     let mut puboutput = File::create(pub_path)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to create public key file {}: {}", pub_path, e)))?;
     puboutput.write_all(&keys.public)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to write public key: {}", e)))?;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
-    let mut password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
+    std::io::stdout().flush().map_err(|e| io::Error::other(format!("Failed to flush stdout: {}", e)))?;
+    let mut password = read_password().map_err(|e| io::Error::other(format!("Failed to read password: {}", e)))?;
     let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to encrypt key file: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to encrypt key file: {}", e)))?;
     keymaterial.zeroize();
     password.zeroize();
     Ok(())
@@ -76,14 +76,14 @@ mod tests {
       let keys = Keypair::generate();
       let key_path = "/tmp/wormsign_test.key";
       let pub_path = "/tmp/wormsign_test.pub";
-      let _ = File::create(key_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create key file {}: {}", key_path, e)));
-      let _ = set_permissions(&key_path, PermissionsExt::from_mode(0o600)).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to set permissions on {}: {}", key_path, e)));
-      let mut puboutput = File::create(pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e))).expect("failed to create public key");
-      let _ = puboutput.write_all(&keys.public).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)));
-      let _ = std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)));
+      let _ = File::create(key_path).map_err(|e| io::Error::other(format!("Failed to create key file {}: {}", key_path, e)));
+      let _ = set_permissions(&key_path, PermissionsExt::from_mode(0o600)).map_err(|e| io::Error::other(format!("Failed to set permissions on {}: {}", key_path, e)));
+      let mut puboutput = File::create(pub_path).map_err(|e| io::Error::other(format!("Failed to create public key file {}: {}", pub_path, e))).expect("failed to create public key");
+      let _ = puboutput.write_all(&keys.public).map_err(|e| io::Error::other(format!("Failed to write public key: {}", e)));
+      let _ = std::io::stdout().flush().map_err(|e| io::Error::other(format!("Failed to flush stdout: {}", e)));
       let password = "000000999999888888777777666666555555";
       let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-      let results = aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to encrypt key file: {}", e)));
+      let results = aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial).map_err(|e| io::Error::other(format!("Failed to encrypt key file: {}", e)));
       keymaterial.zeroize();
       assert!(results.is_ok());
     }
@@ -100,14 +100,14 @@ mod tests {
       let keys = Keypair::generate();
       let key_path = "/tmp/wormsign_test.key";
       let pub_path = "/tmp/wormsign_test.pub";
-      let _ = File::create(key_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create key file {}: {}", key_path, e)));
-      let _ = set_permissions(&key_path, PermissionsExt::from_mode(0o600)).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to set permissions on {}: {}", key_path, e)));
-      let mut puboutput = File::create(pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e))).expect("failed to create public key");
-      let _ = puboutput.write_all(&keys.public).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key: {}", e)));
-      let _ = std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)));
+      let _ = File::create(key_path).map_err(|e| io::Error::other(format!("Failed to create key file {}: {}", key_path, e)));
+      let _ = set_permissions(&key_path, PermissionsExt::from_mode(0o600)).map_err(|e| io::Error::other(format!("Failed to set permissions on {}: {}", key_path, e)));
+      let mut puboutput = File::create(pub_path).map_err(|e| io::Error::other(format!("Failed to create public key file {}: {}", pub_path, e))).expect("failed to create public key");
+      let _ = puboutput.write_all(&keys.public).map_err(|e| io::Error::other(format!("Failed to write public key: {}", e)));
+      let _ = std::io::stdout().flush().map_err(|e| io::Error::other(format!("Failed to flush stdout: {}", e)));
       let password = "000000999999888888777777666666555555";
       let mut keymaterial = aesrest::derive_key(password.as_bytes(), 32);
-      let _ = aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to encrypt key file: {}", e)));
+      let _ = aesrest::encrypt_key(keys.expose_secret().to_vec(), key_path, &keymaterial).map_err(|e| io::Error::other(format!("Failed to encrypt key file: {}", e)));
       let results = aesrest::decrypt_key(key_path, &keymaterial);
       keymaterial.zeroize();
       assert!(results.is_ok());
