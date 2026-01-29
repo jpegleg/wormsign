@@ -57,7 +57,7 @@ pub fn encrypt_key(mut input_data: Vec<u8>, output_file: &str, keymaterial: &[u8
     let outdata: &[u8] = &input_data;
     let mut output = File::create(output_file)?;
     output.write_all(&nonce)?;
-    output.write_all(&outdata)?;
+    output.write_all(outdata)?;
 
     Ok(())
 }
