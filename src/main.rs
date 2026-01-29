@@ -61,16 +61,16 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
     let mut json_started = false;
     let file_path = Path::new(file_path);
     let metadata = try_print_json!(
-        file_path.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata: {}", e))),
+        file_path.metadata().map_err(|e| io::Error::other(format!("Failed to read file metadata: {}", e))),
         json_started
     );
     let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        File::open(file_path).map_err(|e| io::Error::other(format!("Failed to open file {}: {}", file_path.display(), e))),
         json_started
     );
     let mut bytes = Vec::new();
     try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::other(format!("Failed to read file {}: {}", file_path.display(), e))),
         json_started
     );
     let num_bytes = bytes.len();
@@ -103,22 +103,22 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
     println!("  \"Total as bits\": \"{}\",", num_bits);
     println!("  \"Byte distribution\": \"{}\",", byte_distribution);
     let created: DateTime<Utc> = try_print_json!(
-        metadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get created timestamp.")).map(DateTime::from),
+        metadata.created().map_err(|_| io::Error::other("Failed to get created timestamp.")).map(DateTime::from),
         json_started
     );
     let modified: DateTime<Utc> = try_print_json!(
-        metadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get modified timestamp.")).map(DateTime::from),
+        metadata.modified().map_err(|_| io::Error::other("Failed to get modified timestamp.")).map(DateTime::from),
         json_started
     );
     let access: DateTime<Utc> = try_print_json!(
-        metadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get accessed timestamp.")).map(DateTime::from),
+        metadata.accessed().map_err(|_| io::Error::other("Failed to get accessed timestamp.")).map(DateTime::from),
         json_started
     );
     let changed: DateTime<Utc> = {
         let ctime = metadata.ctime();
         let ctimesec = metadata.ctime_nsec() as u32;
         let naive_datetime = try_print_json!(
-            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid changed timestamp")),
+            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::other("Invalid changed timestamp")),
             json_started
         );
         TimeZone::from_utc_datetime(&Utc, &naive_datetime)
@@ -148,25 +148,25 @@ fn verf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn S
         println!("  \"Open\": \"File is not open by another program. Verifying...\",");
     }
     let mut kfile = try_print_json!(
-        File::open(&pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the key: {}", e))),
+        File::open(pub_path).map_err(|e| io::Error::other(format!("Failed to open the key: {}", e))),
         json_started
     );
     let mut kbytes = Vec::new();
     try_print_json!(
-        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the key: {}", e))),
+        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::other(format!("Failed to read the key: {}", e))),
         json_started
     );
     let mut sfile = try_print_json!(
-        File::open(&sig_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the signature file: {}", e))),
+        File::open(sig_path).map_err(|e| io::Error::other(format!("Failed to open the signature file: {}", e))),
         json_started
     );
     let mut sbytes = Vec::new();
     try_print_json!(
-        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the signature file: {}", e))),
+        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::other(format!("Failed to read the signature file: {}", e))),
         json_started
     );
     let msg = &bytes;
-    let sig_verify = verify(&sbytes, &msg, &kbytes);
+    let sig_verify = verify(&sbytes, msg, &kbytes);
     let statusig = sig_verify.is_ok();
     println!("  \"Verification Result\": \"{}\"", statusig);
     println!(" }}");
@@ -185,33 +185,33 @@ fn averf(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dyn 
     println!("{:?}: {{", file_path);
     let mut bytes = Vec::new();
     let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        File::open(file_path).map_err(|e| io::Error::other(format!("Failed to open file {}: {}", file_path.display(), e))),
         json_started
     );
     try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::other(format!("Failed to read file {}: {}", file_path.display(), e))),
         json_started
     );
     let mut kfile = try_print_json!(
-        File::open(&pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the key: {}", e))),
+        File::open(pub_path).map_err(|e| io::Error::other(format!("Failed to open the key: {}", e))),
         json_started
     );
     let mut kbytes = Vec::new();
     try_print_json!(
-        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the key: {}", e))),
+        kfile.read_to_end(&mut kbytes).map_err(|e| io::Error::other(format!("Failed to read the key: {}", e))),
         json_started
     );
     let mut sfile = try_print_json!(
-        File::open(&sig_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the signature file: {}", e))),
+        File::open(sig_path).map_err(|e| io::Error::other(format!("Failed to open the signature file: {}", e))),
         json_started
     );
     let mut sbytes = Vec::new();
     try_print_json!(
-        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the signature file: {}", e))),
+        sfile.read_to_end(&mut sbytes).map_err(|e| io::Error::other(format!("Failed to read the signature file: {}", e))),
         json_started
     );
     let msg = &bytes;
-    let sig_verify = verify(&sbytes, &msg, &kbytes);
+    let sig_verify = verify(&sbytes, msg, &kbytes);
     let statusig = sig_verify.is_ok();
     println!("  \"Verification Result\": \"{}\"", statusig);
     println!(" }}");
@@ -226,23 +226,23 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let mut json_started = false;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
-    let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
+    std::io::stdout().flush().map_err(|e| io::Error::other(format!("Failed to flush stdout: {}", e)))?;
+    let password = read_password().map_err(|e| io::Error::other(format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to decrypt key: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to decrypt key: {}", e)))?;
     let file_path = Path::new(file_path);
     let metadata = try_print_json!(
-        file_path.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata: {}", e))),
+        file_path.metadata().map_err(|e| io::Error::other(format!("Failed to read file metadata: {}", e))),
         json_started
     );
     let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        File::open(file_path).map_err(|e| io::Error::other(format!("Failed to open file {}: {}", file_path.display(), e))),
         json_started
     );
     let mut bytes = Vec::new();
     try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::other(format!("Failed to read file {}: {}", file_path.display(), e))),
         json_started
     );
     let num_bytes = bytes.len();
@@ -275,22 +275,22 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     println!("  \"Total as bits\": \"{}\",", num_bits);
     println!("  \"Byte distribution\": \"{}\",", byte_distribution);
     let created: DateTime<Utc> = try_print_json!(
-        metadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get created timestamp.")).map(DateTime::from),
+        metadata.created().map_err(|_| io::Error::other("Failed to get created timestamp.")).map(DateTime::from),
         json_started
     );
     let modified: DateTime<Utc> = try_print_json!(
-        metadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get modified timestamp.")).map(DateTime::from),
+        metadata.modified().map_err(|_| io::Error::other("Failed to get modified timestamp.")).map(DateTime::from),
         json_started
     );
     let access: DateTime<Utc> = try_print_json!(
-        metadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get accessed timestamp.")).map(DateTime::from),
+        metadata.accessed().map_err(|_| io::Error::other("Failed to get accessed timestamp.")).map(DateTime::from),
         json_started
     );
     let changed: DateTime<Utc> = {
         let ctime = metadata.ctime();
         let ctimesec = metadata.ctime_nsec() as u32;
         let naive_datetime = try_print_json!(
-            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid changed timestamp")),
+            NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::other("Invalid changed timestamp")),
             json_started
         );
         TimeZone::from_utc_datetime(&Utc, &naive_datetime)
@@ -322,28 +322,28 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let keypath = Path::new(&key_path);
     let pubpath = Path::new(&pub_path);
     let kmetadata = try_print_json!(
-        keypath.metadata().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file metadata for key: {}", e))),
+        keypath.metadata().map_err(|e| io::Error::other(format!("Failed to read file metadata for key: {}", e))),
         json_started
     );
     let mut kpubf = try_print_json!(
-        File::open(&pubpath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the public key: {}", e))),
+        File::open(pubpath).map_err(|e| io::Error::other(format!("Failed to open the public key: {}", e))),
         json_started
     );
     let mut pubbytes = Vec::new();
     try_print_json!(
-        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the public key: {}", e))),
+        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::other(format!("Failed to read the public key: {}", e))),
         json_started
     );
     let keys: Keypair = Keypair::loadit(pubbytes, kbytes);
     let msg = &bytes;
-    let sig = keys.sign(&msg);
+    let sig = keys.sign(msg);
     let spath = Path::new(sig_path);
     let mut sigoutput = try_print_json!(
-        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
+        File::create(spath).map_err(|e| io::Error::other(format!("Failed to create signature file {}: {}", sig_path, e))),
         json_started
     );
     try_print_json!(
-        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
+        sigoutput.write_all(&sig).map_err(|e| io::Error::other(format!("Failed to write signature: {}", e))),
         json_started
     );
     println!("  \"Dilithium signature file\": \"{}\",", sig_path);
@@ -351,22 +351,22 @@ fn sig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resul
     let kinode = kmetadata.ino();
     println!("  \"Key Inode\": \"{}\",", &kinode);
     let kcreated: DateTime<Utc> = try_print_json!(
-        kmetadata.created().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key created timestamp.")).map(DateTime::from),
+        kmetadata.created().map_err(|_| io::Error::other("Failed to get key created timestamp.")).map(DateTime::from),
         json_started
     );
     let kmodified: DateTime<Utc> = try_print_json!(
-        kmetadata.modified().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key modified timestamp.")).map(DateTime::from),
+        kmetadata.modified().map_err(|_| io::Error::other("Failed to get key modified timestamp.")).map(DateTime::from),
         json_started
     );
     let kaccess: DateTime<Utc> = try_print_json!(
-        kmetadata.accessed().map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to get key accessed timestamp.")).map(DateTime::from),
+        kmetadata.accessed().map_err(|_| io::Error::other("Failed to get key accessed timestamp.")).map(DateTime::from),
         json_started
     );
     let kchanged: DateTime<Utc> = {
         let ctime = kmetadata.ctime();
         let ctimesec = kmetadata.ctime_nsec() as u32;
         let naive_datetime = try_print_json!(
-            chrono::NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::new(io::ErrorKind::Other, "Invalid key changed timestamp")),
+            chrono::NaiveDateTime::from_timestamp_opt(ctime, ctimesec).ok_or(io::Error::other("Invalid key changed timestamp")),
             json_started
         );
         TimeZone::from_utc_datetime(&Utc, &naive_datetime)
@@ -403,43 +403,43 @@ fn asig(file_path: &str, key_path: &str, pub_path: &str, sig_path: &str) -> Resu
     let json_started = true;
     // STDERR on prompt so that output stays valid JSON, useful for redirects etc
     eprintln!("Enter key password then press enter (will not be displayed):");
-    std::io::stdout().flush().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to flush stdout: {}", e)))?;
-    let password = read_password().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read password: {}", e)))?;
+    std::io::stdout().flush().map_err(|e| io::Error::other(format!("Failed to flush stdout: {}", e)))?;
+    let password = read_password().map_err(|e| io::Error::other(format!("Failed to read password: {}", e)))?;
     let keymaterial = aesrest::derive_key(password.as_bytes(), 32);
     let kbytes = aesrest::decrypt_key(key_path, &keymaterial)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to decrypt key: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to decrypt key: {}", e)))?;
     let file_path = Path::new(file_path);
     println!("{{");
     println!("{:?}: {{", file_path);
     let pubpath = Path::new(&pub_path);
     let mut kpubf = try_print_json!(
-        File::open(&pubpath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open the public key: {}", e))),
+        File::open(pubpath).map_err(|e| io::Error::other(format!("Failed to open the public key: {}", e))),
         json_started
     );
     let mut bytes = Vec::new();
     let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        File::open(file_path).map_err(|e| io::Error::other(format!("Failed to open file {}: {}", file_path.display(), e))),
         json_started
     );
     try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::other(format!("Failed to read file {}: {}", file_path.display(), e))),
         json_started
     );
     let mut pubbytes = Vec::new();
     try_print_json!(
-        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read the public key: {}", e))),
+        kpubf.read_to_end(&mut pubbytes).map_err(|e| io::Error::other(format!("Failed to read the public key: {}", e))),
         json_started
     );
     let keys: Keypair = Keypair::loadit(pubbytes, kbytes);
     let msg = &bytes;
-    let sig = keys.sign(&msg);
+    let sig = keys.sign(msg);
     let spath = Path::new(sig_path);
     let mut sigoutput = try_print_json!(
-        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
+        File::create(spath).map_err(|e| io::Error::other(format!("Failed to create signature file {}: {}", sig_path, e))),
         json_started
     );
     try_print_json!(
-        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
+        sigoutput.write_all(&sig).map_err(|e| io::Error::other(format!("Failed to write signature: {}", e))),
         json_started
     );
     println!("  \"Dilithium signature file\": \"{}\",", sig_path);
@@ -460,32 +460,32 @@ fn autosig(file_path: &str, pub_path: &str, sig_path: &str) -> Result<(), Box<dy
     println!("{:?}: {{", file_path);
     let mut bytes = Vec::new();
     let mut file = try_print_json!(
-        File::open(&file_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open file {}: {}", file_path.display(), e))),
+        File::open(file_path).map_err(|e| io::Error::other(format!("Failed to open file {}: {}", file_path.display(), e))),
         json_started
     );
     try_print_json!(
-        file.read_to_end(&mut bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read file {}: {}", file_path.display(), e))),
+        file.read_to_end(&mut bytes).map_err(|e| io::Error::other(format!("Failed to read file {}: {}", file_path.display(), e))),
         json_started
     );
     let keys: Keypair = Keypair::generate();
     let mut pubout = try_print_json!(
-        File::create(pub_path).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create public key file {}: {}", pub_path, e))),
+        File::create(pub_path).map_err(|e| io::Error::other(format!("Failed to create public key file {}: {}", pub_path, e))),
         json_started
     );
     try_print_json!(
-        pubout.write_all(&keys.public).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write public key to file: {}", e))),
+        pubout.write_all(&keys.public).map_err(|e| io::Error::other(format!("Failed to write public key to file: {}", e))),
         json_started
     );
 
     let msg = &bytes;
-    let sig = keys.sign(&msg);
+    let sig = keys.sign(msg);
     let spath = Path::new(sig_path);
     let mut sigoutput = try_print_json!(
-        File::create(spath).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to create signature file {}: {}", sig_path, e))),
+        File::create(spath).map_err(|e| io::Error::other(format!("Failed to create signature file {}: {}", sig_path, e))),
         json_started
     );
     try_print_json!(
-        sigoutput.write_all(&sig).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to write signature: {}", e))),
+        sigoutput.write_all(&sig).map_err(|e| io::Error::other(format!("Failed to write signature: {}", e))),
         json_started
     );
     println!("  \"Dilithium signature file\": \"{}\",", sig_path);
@@ -525,12 +525,12 @@ fn main() {
 /// This function runs wormsign, a wrapper for the other functions and CLI options.
 fn run() -> Result<(), Box<dyn StdError>> {
     let mut file = File::open("./wormsign.toml")
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to open wormsign.toml: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to open wormsign.toml: {}", e)))?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Failed to read wormsign.toml: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("Failed to read wormsign.toml: {}", e)))?;
     let config: Config = toml::from_str(&contents)
-        .map_err(|_| io::Error::new(io::ErrorKind::Other, format!("Failed to parse wormsign.toml")))?;
+        .map_err(|_| io::Error::other(format!("Failed to parse wormsign.toml")))?;
     let args: Vec<String> = env::args().collect();
     let file_path = &config.file_path;
     let pub_path = &config.pub_path;
