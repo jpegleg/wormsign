@@ -1,6 +1,6 @@
 [package]
 name = "wormsign"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 authors = ["Keegan Bowen <carefuldata@protonmail.com>"]
 license = "MIT"
@@ -19,13 +19,13 @@ rpassword = "7.5.4"
 aes = "0.8.4"
 ctr = "0.9.2"
 sha3 = "0.10.9"
-zeroize = "1.9.0"
+zeroize = "1.9.1"
 chrono = "0.4.45"
 uzers = "0.12.2"
 argon2 = "0.5.3"
 toml = "0.9.12"
-serde = { version = "1.0.228", features = ["derive"] }
-rand = "0.9.4"
+serde = { version = "1.0.229", features = ["derive"] }
+rand = "0.9.5"
 
 [features]
 default = ["mode5", "aes", "random_signing"]
