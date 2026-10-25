@@ -22,7 +22,7 @@ sha3 = "0.10.9"
 zeroize = "1.9.1"
 chrono = "0.4.45"
 uzers = "0.12.2"
-argon2 = "0.5.3"
+argon2 = "0.6.0"
 toml = "0.9.12"
 serde = { version = "1.0.229", features = ["derive"] }
 rand = "0.9.5"
